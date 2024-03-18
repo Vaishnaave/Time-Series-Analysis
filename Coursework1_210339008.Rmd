@@ -1,0 +1,92 @@
+---
+title: "Time series Analysis"
+subtitle: "Monthly Deaths from Lung Disease in the UK"
+author: "Vaishnaave Rajakumar"
+date: " 16/03/2024"
+output: html_document
+toc: true
+toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo =TRUE)
+```
+### Description of the data set
+ldeaths consists of three time series giving the monthly deaths from bronchitis,emphysema and asthma in the UK, 1974-1979,both sexes (ldeaths),males(mdeaths) and females (fdeaths).
+
+```{r}
+ldeaths #dataset for both male and female
+plot(ldeaths) #plot of the graph
+```
+
+
+The plot of the graph tells us that there is no consistent trend. There are fluctuations in the monthly deaths from Lung Diseases in the UK. In 1976, the graph seems to reach a peak number of deaths within the data from 1974-1979. At the year 1979 the graph has an abrupt drop which may have been due to the increased number of smoking awareness campaigns during the late 1970's. 
+The purpose of this project is to identify overall trends in lung disease mortality rates during 1974-1979. By analysing seasonal patterns or fluctuations in death counts such as whether a particular month or season with higher mortality rates will give valuable data for public health planning and resource allocation. Meta's Prophet forecasting system aids in underlying factors that influence lung disease mortality rates over time.
+
+```{r}
+fdeaths #dataset for female deaths
+plot(fdeaths) #plot of the graph
+```
+
+This graph shows the monthly death from lung disease of females in UK between 1974 to 1979. The highest mortality rate is found in the year 1976 and the lowest is found in the second half of the year 1976. This means after summer the mortality rates dropped.
+```{r}
+mdeaths #dataset for male deaths
+plot(mdeaths) #plot of the graph
+```
+
+
+This graph shows the monthly death from lung disease of males in UK between 1974 to 1979. The highest mortality rate is found in the year 1976 and the lowest is found in the second half of the year 1979. This means after summer the mortality rates dropped.
+
+### Analysing all three plots
+The highest and lowest monthly death was recorded in 1976 for ldeaths which is the data that accounts the total of deaths in females and males. There has been constant fluctuation in the numbers over the months in various years but the overall behavior has been consistent.The trend towards 1979 end shows the numbers to be decreasing.
+
+<http://rmarkdown.rstudio.com>.
+
+### Meta's Prophet forecasting
+```{r}
+ldeaths.df = data.frame(ds=zoo::as.yearmon(time(ldeaths)),
+                        y=ldeaths) #Create a dataframe with proper column names and format
+deathmodel = prophet::prophet(ldeaths.df) #Initialize the prophet model
+future = prophet::make_future_dataframe(deathmodel, periods=12, freq="quarter") #Generate future dates for forecasting
+forecast = predict (deathmodel,future)# Predict future values
+plot(deathmodel,forecast) 
+```
+
+ldeaths represents monthly deaths from lung diseases in the UK from 1974 to 1979.Each row of the dataset represents a month, and the columns represent different age groups. The black points are the actual observed values from original dataset until end of 1979 and blue lines are the forecasted predictions from the start until 1982 and the shadow  we get this is maximum and minimum value our forecasted values can take.
+
+```{r}
+library(prophet)
+prophet_plot_components(deathmodel,forecast) #Plot the other important components of the prophet model
+```
+
+The first graph tells us that there is decreasing trend from the year 1974 to 1983 and it is negative linear correlation.
+The second graph tells us about the yearly seasonality which shows that there is a peak period in start of the year but most of the year there is no seasonality and blue curvy line is close to zero.
+
+### Exponential Smoothing
+```{r}
+exponentialmodel= HoltWinters(ldeaths,beta=FALSE,gamma =FALSE) #Exponetial smoothing
+plot(exponentialmodel) #plotting the exponential model
+exponentialmodel
+residualexp= ldeaths - exponentialmodel$fitted[,1] #Residual
+plot(residualexp)#Residual plots
+```
+
+The observed data reveals a clear seasonal pattern with sharp peaks and troughs occurring regularly. This shows us that the data has a strong seasonal component, such as monthly mortality rates. The filtered data which is the result of applying the exponential smoothing, smooths out the observed data. It maintains the overall seasonal pattern while reducing volatality.
+
+Exponential smoothing models the averages of past values and on our graph we will always see the prediction will always be below the black line and as close as possible to each other with alpha value closer to 1.
+
+```{r}
+library(dygraphs)# load package
+ldeaths<-cbind(mdeaths, fdeaths) #binds both female and male deaths into one matrix
+dygraph(ldeaths) %>% #Generates time series plot
+  dyRangeSelector() ##Allows to zoom in and out of graph
+```
+
+
+The graph displays two time series: 'mdeaths' and 'fdeaths'. Both time series presents a strong seasonal pattern with peaks and troughs occurring at regular intervals. This suggests that there could be seasonal influence on mortality rate such as seasonal illnesses. When comparing both the female and male deaths,female deaths seem to be lower than male deaths.
+You can also embed plots, for example:
+  
+  
+  
+  Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+  
